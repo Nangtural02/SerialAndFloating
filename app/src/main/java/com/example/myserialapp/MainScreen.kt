@@ -1,7 +1,10 @@
 package com.example.myserialapp
 
 import android.app.Application
+import android.net.Uri
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -35,7 +39,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.myserialapp.positioningUtill.Anchor
 import com.example.myserialapp.positioningUtill.CoordinatePlane
+import com.example.myserialapp.positioningUtill.Point
+import com.example.myserialapp.positioningUtill.getPoint
 import com.example.myserialapp.ui.theme.MySerialAppTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
@@ -45,7 +52,11 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainScreen(viewModel: SerialViewModel, innerPadding:PaddingValues){
     var dialog by rememberSaveable { mutableStateOf(false) }
-    val connected = viewModel.connected.asStateFlow().collectAsState().value
+
+
+
+
+    viewModel.anchorList = listOf(Anchor(coordinateX = 10f, coordinateY = 10f), Anchor(coordinateX = 0f, coordinateY = 0f))
 
     Box(
         modifier = Modifier
@@ -58,8 +69,15 @@ fun MainScreen(viewModel: SerialViewModel, innerPadding:PaddingValues){
                 ConnectingButton(viewModel = viewModel)
             }
 
+            item{
+
+            }
+
             item {
                 NowRangingDataLog(viewModel = viewModel)
+            }
+            item{
+                insertImageButton()
             }
 
             //SerialLog(viewModel)
@@ -119,46 +137,23 @@ fun ConnectingButton(viewModel: SerialViewModel){
 
 }
 @Composable
-fun NowRangingDataLog(viewModel: SerialViewModel){
+fun NowRangingDataLog(viewModel: SerialViewModel, imageUri: Uri? = null){
     val data = viewModel.nowRangingData
     Column(modifier = Modifier
         .background(Color.Green)
         .fillMaxWidth()
         .padding(end = 5.dp)){
-        Text(text = "Block: ${data.value.blockNum}      lastCoordinateBlock: ${viewModel.lastCoordinateBlock.intValue}")
+        Text(text = "Block: ${data.value.blockNum}")
         Text(text = "Distance: \n")
         data.value.distanceList.forEach{ rangingDistance ->
             Text(text="${rangingDistance.id}: ${rangingDistance.distance}m, PDOA: ${rangingDistance.PDOA}_degree, AOA: ${rangingDistance.AOA}_degree")
         }
-        CoordinatePlane(anchorList = viewModel.anchorList,
-            pointsList = listOf(
-                viewModel.calculated4_3Result,
-                viewModel.calculated4_4Result,
-                viewModel.calculated2_2Result
-
-            ),
+        CoordinatePlane(anchorList = viewModel.anchorList.map{it.getPoint()},
+            viewModel.nowRangingData.value.coordinates,
             distanceList = data.value.distanceList.map{it.distance})
-        if(data.value.coordinates.isNotEmpty()){
-            data.value.coordinates.forEach { point ->
-                Text(text = "Coordinate(${"%.2f".format(point.x)},${"%.2f".format(point.y)},${"%.2f".format(point.z)})")
-            }
-        }else {
-            Text(text= "not all anchor connected")
-
-        }
-        
-
     }
 }
 
-@Composable
-fun SerialLog(viewModel:SerialViewModel){
-    LazyColumn() {
-        item {
-            Text(text = viewModel.lineTexts)
-        }
-    }
-}
 @Preview(showBackground = true)
 @Composable
 fun MainScreenPreview() {

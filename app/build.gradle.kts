@@ -76,7 +76,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.4.2")
 
     implementation ("com.github.mik3y:usb-serial-for-android:3.8.0")
-
+    implementation("io.coil-kt:coil-compose:2.7.0")
     val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:$room_version")
     ksp("androidx.room:room-compiler:$room_version")
